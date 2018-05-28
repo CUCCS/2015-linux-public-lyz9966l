@@ -1,0 +1,7 @@
+FTP_USER_DIRECTORY: /home/ftp
+FTP_USER: passwd_test
+FTP_PASSWD: 123
+ANONYMOUS_FILE: /home/anonymous
+NFS_READ_AND_WRITE: /home/read_and_write
+NFS_READO_ONLY: /home/read_only
+

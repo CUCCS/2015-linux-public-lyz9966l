@@ -1,0 +1,58 @@
+# main.yml
+- name: os update
+  shell: apt-get update
+
+- name: install software
+  apt: name={{ item }} state=installed
+  with_items:
+      - proftpd
+      - expect
+      - nfs-kernel-server
+      - isc-dhcp-server
+      - bind9
+      - smbclient
+# ftp
+- name: add ftp user
+  shell: ftpasswd --passwd --file=/etc/proftpd/ftpd.passwd --name={{ FTP_USER }} --uid=1000 --home={{ FTP_USER_DIRECTORY }} --shell=/sbin/nologin          
+- name: add ftp group
+  shell: echo {{ FTP_PASSWD }} | ftpasswd --group --file=/etc/proftpd/ftpd.group --name={{ FTP_GROUP }} --gid=1000
+- name: ftp user to ftp group
+  shell: ftpasswd --group --name={{ FTP_GROUP }} --gid=99 --member={{FTP_USER }}
+- name: add linux same name user
+  shell: useradd {{ FTP_USER }}  
+- name: create user directory
+  shell: path={{ FTP_USER_DIRECTORY }} state=directory
+
+- name: create anonymous file
+  file: path={{ ANONYMOUS_FILE }} state=directory
+- name: copy configuration file
+  template: src=proftpd.conf dest=/etc/proftpd/proftpd.conf backup=yes
+  notify: restart proftpd
+
+# nfs
+- name: create read and write directory
+  file: path={{ NFS_READ_AND_WRITE }} state=directory
+          
+- name: create read only directory
+  file: path={{ NFS_READ_ONLY }} state=directory
+
+- name: copy configuration file
+  template: src=exports dest=/etc/exports backup=yes
+  notify: restart nfs
+
+# dhcp
+- name: copy network config file
+  template: src=interface dest=/etc/network/interfaces
+- name: copy dhcp config file 
+  template: src=isc-dhcp-server dest=/etc/default/isc-dhcp-server backup=yes
+- name: copy dhcpd config file
+  template: src=dhcpd.conf dest=/etc/dhcp/dhcpd.conf backup=yes
+  notify: restart dhcp
+
+# dns  
+- name: copy config file
+  template: src=db.cuc.edu.cn dest=/etc/bind/db.cuc.edu.cn backup=yes
+- name: copy config file
+  template: src=named.conf.local  dest=/etc/bind/named.conf.local backup=yes
+  notify: restart dns
+          
